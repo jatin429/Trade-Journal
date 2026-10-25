@@ -16,8 +16,7 @@ import {
   Layers,
   ArrowRight
 } from 'lucide-react';
-import confetti from 'canvas-confetti';
-import { updateAuthProfile, uploadAvatar } from '../services/api';
+import { updateAuthProfile, uploadAvatar, BACKEND_URL } from '../services/api';
 
 const PRESET_AVATARS = [
   { id: 'bull', label: 'Bull Trader', url: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=150&auto=format&fit=crop&q=80' },
@@ -94,7 +93,7 @@ export default function ProfileModal({ isOpen, onClose, user, onProfileUpdated }
           try {
             const res = await uploadAvatar(formData);
             if (res.success && res.avatarUrl) {
-              const fullUrl = `http://localhost:5000${res.avatarUrl}`;
+              const fullUrl = res.avatarUrl.startsWith('http') ? res.avatarUrl : `${BACKEND_URL}${res.avatarUrl}`;
               setAvatar(fullUrl);
               setSuccessMsg('Profile picture uploaded and saved!');
             }
