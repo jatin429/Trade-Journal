@@ -104,9 +104,9 @@ function PCRGauge({ pcr }) {
           <circle cx="60" cy="70" r="4.5" fill={color} />
         </g>
         {/* Boundary indicators */}
-        <text x="12" y="73" fill="#f43f5e" fontSize="7" fontWeight="700">0.5</text>
+        <text x="11" y="73" fill="#f43f5e" fontSize="7" fontWeight="700">0.5</text>
         <text x="56" y="24" fill="#94a3b8" fontSize="6.5">1.0</text>
-        <text x="96" y="73" fill="#10b981" fontSize="7" fontWeight="700">1.5</text>
+        <text x="99" y="73" fill="#10b981" fontSize="7" fontWeight="700">1.5</text>
         {/* Centered value */}
         <text x="60" y="58" textAnchor="middle" fill="#ffffff" fontSize="14" fontWeight="800" fontFamily="var(--font-mono, monospace)">
           {pcr.toFixed(2)}
@@ -244,21 +244,12 @@ export default function MarketSentiment() {
       background: 'linear-gradient(180deg, rgba(15, 23, 42, 0.75) 0%, rgba(9, 14, 28, 0.9) 100%)',
     }}>
       {/* 1. Header Toolbar */}
-      <div style={{
-        padding: '16px 20px',
-        borderBottom: '1px solid rgba(255,255,255,0.08)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '12px',
-        background: 'rgba(255,255,255,0.02)',
-      }}>
+      <div className="market-pulse-toolbar">
         {/* Title & Live Spot Badge */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
           <div style={{
-            width: '38px',
-            height: '38px',
+            width: '36px',
+            height: '36px',
             borderRadius: '10px',
             background: 'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)',
             display: 'flex',
@@ -267,11 +258,11 @@ export default function MarketSentiment() {
             boxShadow: '0 4px 14px rgba(245,158,11,0.35)',
             flexShrink: 0,
           }}>
-            <Flame size={20} color="#ffffff" />
+            <Flame size={19} color="#ffffff" />
           </div>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff', margin: 0 }}>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <h3 style={{ fontSize: '1.02rem', fontWeight: 800, color: '#ffffff', margin: 0, whiteSpace: 'nowrap' }}>
                 Live Market Pulse
               </h3>
               {data && (
@@ -281,12 +272,14 @@ export default function MarketSentiment() {
                   gap: '4px',
                   padding: '2px 8px',
                   borderRadius: '6px',
-                  fontSize: '0.75rem',
+                  fontSize: '0.74rem',
                   fontWeight: 800,
                   fontFamily: 'var(--font-mono, monospace)',
                   background: isGreen ? 'rgba(16,185,129,0.15)' : 'rgba(244,63,94,0.15)',
                   color: isGreen ? '#10b981' : '#f43f5e',
                   border: `1px solid ${isGreen ? 'rgba(16,185,129,0.3)' : 'rgba(244,63,94,0.3)'}`,
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
                 }}>
                   {isGreen ? '▲' : '▼'} {data.spotPrice?.toLocaleString('en-IN')}
                   <span style={{ opacity: 0.85, fontSize: '0.68rem', fontWeight: 600 }}>
@@ -295,123 +288,100 @@ export default function MarketSentiment() {
                 </span>
               )}
             </div>
-            <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '2px' }}>
+            <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '2px', lineHeight: 1.3 }}>
               {symbol === 'SENSEX'
-                ? 'Real-time BSE SENSEX Heatmap • Live Put-Call Ratio (PCR) • Max Pain Level'
-                : 'Real-time NSE Options Heatmap • Live Put-Call Ratio (PCR) • Max Pain Level'}
+                ? 'Real-time BSE SENSEX Heatmap • Live Put-Call Ratio (PCR)'
+                : 'Real-time NSE Options Heatmap • Live Put-Call Ratio (PCR)'}
             </div>
           </div>
         </div>
 
         {/* Index Selector & Controls */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          {/* Symbol Tabs */}
-          <div style={{
-            display: 'flex',
-            background: 'rgba(0,0,0,0.35)',
-            padding: '3px',
-            borderRadius: '8px',
-            border: '1px solid rgba(255,255,255,0.06)',
-          }}>
+        <div className="market-pulse-controls-wrap">
+          {/* Symbol Tabs (Horizontally scrollable on mobile, never cut off!) */}
+          <div className="market-pulse-symbols-bar">
             {SYMBOLS.map(sym => (
               <button
                 key={sym}
                 onClick={() => handleSymbolChange(sym)}
-                style={{
-                  padding: '5px 11px',
-                  borderRadius: '6px',
-                  border: 'none',
-                  background: symbol === sym ? '#f59e0b' : 'transparent',
-                  color: symbol === sym ? '#000000' : '#94a3b8',
-                  fontSize: '0.75rem',
-                  fontWeight: symbol === sym ? 800 : 600,
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease',
-                }}
+                className={`market-pulse-sym-btn ${symbol === sym ? 'active' : ''}`}
               >
                 {sym}
               </button>
             ))}
           </div>
 
-          {/* Metric Mode Toggle (OI vs Volume) */}
-          <div style={{
-            display: 'flex',
-            background: 'rgba(0,0,0,0.35)',
-            padding: '3px',
-            borderRadius: '8px',
-            border: '1px solid rgba(255,255,255,0.06)',
-          }}>
+          <div className="market-pulse-subcontrols">
+            {/* Metric Mode Toggle (OI vs Volume) */}
+            <div style={{
+              display: 'flex',
+              background: 'rgba(0,0,0,0.35)',
+              padding: '2px',
+              borderRadius: '7px',
+              border: '1px solid rgba(255,255,255,0.06)',
+            }}>
+              <button
+                onClick={() => setMetricMode('oi')}
+                style={{
+                  padding: '4px 9px',
+                  borderRadius: '5px',
+                  border: 'none',
+                  background: metricMode === 'oi' ? 'rgba(56,189,248,0.2)' : 'transparent',
+                  color: metricMode === 'oi' ? '#38bdf8' : '#64748b',
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                OI
+              </button>
+              <button
+                onClick={() => setMetricMode('volume')}
+                style={{
+                  padding: '4px 9px',
+                  borderRadius: '5px',
+                  border: 'none',
+                  background: metricMode === 'volume' ? 'rgba(56,189,248,0.2)' : 'transparent',
+                  color: metricMode === 'volume' ? '#38bdf8' : '#64748b',
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Vol
+              </button>
+            </div>
+
+            {/* Refresh Action */}
             <button
-              onClick={() => setMetricMode('oi')}
+              onClick={() => fetchData(symbol, selectedExpiry)}
+              disabled={loading}
               style={{
                 padding: '5px 10px',
-                borderRadius: '6px',
-                border: 'none',
-                background: metricMode === 'oi' ? 'rgba(56,189,248,0.2)' : 'transparent',
-                color: metricMode === 'oi' ? '#38bdf8' : '#64748b',
+                borderRadius: '7px',
+                border: '1px solid rgba(255,255,255,0.1)',
+                background: 'rgba(255,255,255,0.03)',
+                color: '#e2e8f0',
                 fontSize: '0.72rem',
-                fontWeight: 700,
+                fontWeight: 600,
                 cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                whiteSpace: 'nowrap',
               }}
+              title="Force refresh actual dynamic market data"
             >
-              OI
-            </button>
-            <button
-              onClick={() => setMetricMode('volume')}
-              style={{
-                padding: '5px 10px',
-                borderRadius: '6px',
-                border: 'none',
-                background: metricMode === 'volume' ? 'rgba(56,189,248,0.2)' : 'transparent',
-                color: metricMode === 'volume' ? '#38bdf8' : '#64748b',
-                fontSize: '0.72rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-              }}
-            >
-              Vol
+              <RefreshCw size={12} style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />
+              <span>{countdown}s</span>
             </button>
           </div>
-
-          {/* Refresh Action */}
-          <button
-            onClick={() => fetchData(symbol, selectedExpiry)}
-            disabled={loading}
-            style={{
-              padding: '6px 12px',
-              borderRadius: '8px',
-              border: '1px solid rgba(255,255,255,0.1)',
-              background: 'rgba(255,255,255,0.03)',
-              color: '#e2e8f0',
-              fontSize: '0.74rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-            }}
-            title="Force refresh actual dynamic market data"
-          >
-            <RefreshCw size={13} style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />
-            <span>{countdown}s</span>
-          </button>
         </div>
       </div>
 
       {/* 2. Dynamic Live Status Strip */}
-      <div style={{
-        padding: '6px 20px',
-        background: 'rgba(16,185,129,0.06)',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '8px',
-        fontSize: '0.7rem',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#10b981', fontWeight: 600 }}>
+      <div className="market-pulse-status-strip">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#10b981', fontWeight: 600, flexWrap: 'wrap' }}>
           <span style={{
             width: '7px',
             height: '7px',
@@ -419,16 +389,19 @@ export default function MarketSentiment() {
             background: '#10b981',
             boxShadow: '0 0 8px #10b981',
             animation: 'pulse 1.8s infinite',
+            flexShrink: 0,
           }} />
-          {symbol === 'SENSEX' ? 'LIVE BSE SENSEX • SPOT PRICE VIA YAHOO FINANCE' : 'ACTUAL DYNAMIC DATA • LIVE NSE DERIVATIVES STREAM'}
+          <span>
+            {symbol === 'SENSEX' ? 'LIVE BSE SENSEX' : 'LIVE NSE DERIVATIVES'}
+          </span>
           {lastRefresh && (
             <span style={{ color: '#94a3b8', fontWeight: 400 }}>
-              (Last update: {lastRefresh.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })})
+              ({lastRefresh.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })})
             </span>
           )}
         </div>
         {data && (
-          <div style={{ color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          <div style={{ color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             {data.expiry && (
               <span>Expiry: <strong style={{ color: '#ffffff' }}>{data.expiry}</strong></span>
             )}
@@ -485,13 +458,7 @@ export default function MarketSentiment() {
       {data && (
         <>
           {/* Top Analytical Cards */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))',
-            gap: '16px',
-            padding: '20px',
-            borderBottom: '1px solid rgba(255,255,255,0.06)',
-          }}>
+          <div className="market-pulse-cards">
             {/* 1. PCR Ratio Card with Visual Arc */}
             <div style={{
               background: 'rgba(255,255,255,0.02)',
@@ -691,15 +658,15 @@ export default function MarketSentiment() {
               fontSize: '0.72rem',
               fontWeight: 700,
             }}>
-              <div style={{ color: '#f43f5e', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{ color: '#f43f5e', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '5px' }}>
                 <span>CALL {metricMode.toUpperCase()}</span>
-                <span style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 400 }}>(Resistance Buildup)</span>
+                <span className="desktop-only" style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 400 }}>(Resistance)</span>
               </div>
               <div style={{ color: '#f8fafc', textAlign: 'center', textTransform: 'uppercase' }}>
                 STRIKE
               </div>
-              <div style={{ color: '#10b981', textAlign: 'right', textTransform: 'uppercase', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px' }}>
-                <span style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 400 }}>(Support Buildup)</span>
+              <div style={{ color: '#10b981', textAlign: 'right', textTransform: 'uppercase', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px' }}>
+                <span className="desktop-only" style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 400 }}>(Support)</span>
                 <span>PUT {metricMode.toUpperCase()}</span>
               </div>
             </div>
@@ -803,6 +770,122 @@ export default function MarketSentiment() {
       <style>{`
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.9); } }
+
+        .market-pulse-toolbar {
+          padding: 16px 20px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          flex-wrap: wrap;
+          gap: 12px;
+          background: rgba(255, 255, 255, 0.02);
+        }
+
+        .market-pulse-controls-wrap {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+
+        .market-pulse-symbols-bar {
+          display: flex;
+          background: rgba(0, 0, 0, 0.35);
+          padding: 3px;
+          border-radius: 8px;
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          overflow-x: auto;
+          scrollbar-width: none;
+          -webkit-overflow-scrolling: touch;
+          max-width: 100%;
+        }
+        .market-pulse-symbols-bar::-webkit-scrollbar {
+          display: none;
+        }
+
+        .market-pulse-sym-btn {
+          padding: 5px 11px;
+          border-radius: 6px;
+          border: none;
+          background: transparent;
+          color: #94a3b8;
+          font-size: 0.75rem;
+          font-weight: 600;
+          cursor: pointer;
+          white-space: nowrap;
+          flex-shrink: 0;
+          transition: all 0.15s ease;
+        }
+        .market-pulse-sym-btn.active {
+          background: #f59e0b;
+          color: #000000;
+          font-weight: 800;
+        }
+
+        .market-pulse-subcontrols {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .market-pulse-status-strip {
+          padding: 6px 20px;
+          background: rgba(16, 185, 129, 0.06);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          flex-wrap: wrap;
+          gap: 8px;
+          font-size: 0.7rem;
+        }
+
+        .market-pulse-cards {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+          gap: 16px;
+          padding: 20px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        @media (max-width: 768px) {
+          .market-pulse-toolbar {
+            padding: 12px 14px;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 10px;
+          }
+          .market-pulse-controls-wrap {
+            width: 100%;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 8px;
+          }
+          .market-pulse-symbols-bar {
+            width: 100%;
+            justify-content: flex-start;
+          }
+          .market-pulse-sym-btn {
+            padding: 5px 8px;
+            font-size: 0.72rem;
+          }
+          .market-pulse-subcontrols {
+            width: 100%;
+            justify-content: space-between;
+          }
+          .market-pulse-status-strip {
+            padding: 8px 14px;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 5px;
+          }
+          .market-pulse-cards {
+            padding: 12px;
+            gap: 12px;
+            grid-template-columns: 1fr;
+          }
+        }
       `}</style>
     </div>
   );

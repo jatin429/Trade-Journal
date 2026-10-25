@@ -312,88 +312,40 @@ export default function Dashboard({
       {/* 1.5 LIVE NIFTY 50 STOCK HEATMAP & MARKET PULSE */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
         {/* Market Visualizer Selector Bar */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '10px',
-          padding: '8px 14px',
-          borderRadius: '12px',
-          background: 'rgba(255, 255, 255, 0.02)',
-          border: '1px solid rgba(255, 255, 255, 0.06)'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Market View:
-            </span>
-            <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', padding: '3px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className="market-view-toolbar">
+          <div className="market-view-label-row">
+            <span className="market-view-label">MARKET VIEW</span>
+            <div className="market-view-btn-group">
               <button
                 id="btn-market-tab-heatmap"
                 onClick={() => setMarketViewTab('heatmap')}
-                style={{
-                  padding: '5px 12px',
-                  borderRadius: '6px',
-                  border: 'none',
-                  background: marketViewTab === 'heatmap' ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'transparent',
-                  color: marketViewTab === 'heatmap' ? '#ffffff' : '#94a3b8',
-                  fontSize: '0.75rem',
-                  fontWeight: marketViewTab === 'heatmap' ? 800 : 600,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  boxShadow: marketViewTab === 'heatmap' ? '0 2px 8px rgba(16, 185, 129, 0.35)' : 'none'
-                }}
+                className={`market-view-btn ${marketViewTab === 'heatmap' ? 'mvb-heatmap active' : ''}`}
               >
                 <span>🗺️</span>
-                <span>Stock Heatmap</span>
+                <span className="mvb-full-label">Stock Heatmap</span>
+                <span className="mvb-short-label">Heatmap</span>
               </button>
               <button
                 id="btn-market-tab-options"
                 onClick={() => setMarketViewTab('options')}
-                style={{
-                  padding: '5px 12px',
-                  borderRadius: '6px',
-                  border: 'none',
-                  background: marketViewTab === 'options' ? 'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)' : 'transparent',
-                  color: marketViewTab === 'options' ? '#ffffff' : '#94a3b8',
-                  fontSize: '0.75rem',
-                  fontWeight: marketViewTab === 'options' ? 800 : 600,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  boxShadow: marketViewTab === 'options' ? '0 2px 8px rgba(245, 158, 11, 0.35)' : 'none'
-                }}
+                className={`market-view-btn ${marketViewTab === 'options' ? 'mvb-options active' : ''}`}
               >
                 <span>⚡</span>
-                <span>Options Pulse & PCR</span>
+                <span className="mvb-full-label">Options Pulse & PCR</span>
+                <span className="mvb-short-label">Options</span>
               </button>
               <button
                 id="btn-market-tab-both"
                 onClick={() => setMarketViewTab('both')}
-                style={{
-                  padding: '5px 12px',
-                  borderRadius: '6px',
-                  border: 'none',
-                  background: marketViewTab === 'both' ? 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)' : 'transparent',
-                  color: marketViewTab === 'both' ? '#ffffff' : '#94a3b8',
-                  fontSize: '0.75rem',
-                  fontWeight: marketViewTab === 'both' ? 800 : 600,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  boxShadow: marketViewTab === 'both' ? '0 2px 8px rgba(99, 102, 241, 0.35)' : 'none'
-                }}
+                className={`market-view-btn ${marketViewTab === 'both' ? 'mvb-both active' : ''}`}
               >
                 <span>🔲</span>
-                <span>Split View (Both)</span>
+                <span className="mvb-full-label">Split View (Both)</span>
+                <span className="mvb-short-label">Both</span>
               </button>
             </div>
           </div>
-          <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
+          <div className="market-view-subtitle">
             Live Nifty 50 market capitalization & sector rotation
           </div>
         </div>

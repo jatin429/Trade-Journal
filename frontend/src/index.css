@@ -537,23 +537,307 @@ select.input-field {
   }
 }
 
-/* Mobile Bottom Navigation Bar */
+/* ============================================================
+   NIFTY HEATMAP - RESPONSIVE HEADER
+   ============================================================ */
+.nifty-heatmap-header {
+  padding: 12px 16px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.heatmap-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.heatmap-action-btns {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.heatmap-ctrl-btn {
+  padding: 5px 9px;
+  border-radius: 7px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+/* Row 2: index selector + search */
+.heatmap-index-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.heatmap-index-scroller {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.heatmap-index-scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.heatmap-index-pills {
+  display: flex;
+  padding: 3px;
+  border-radius: 8px;
+  width: max-content;
+}
+
+.heatmap-index-btn {
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: none;
+  font-size: 0.73rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.heatmap-index-btn.hib-active {
+  font-weight: 800;
+}
+
+.hib-label {
+  display: inline;
+}
+
+.heatmap-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 8px;
+  padding: 4px 8px;
+  flex-shrink: 0;
+}
+
+/* Subheader */
+.heatmap-subheader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 7px 14px;
+  font-size: 0.73rem;
+}
+
+@media (max-width: 768px) {
+  .nifty-heatmap-header {
+    padding: 10px 12px 6px;
+    gap: 8px;
+  }
+
+  .heatmap-title-row {
+    gap: 8px;
+  }
+
+  .heatmap-action-btns {
+    gap: 4px;
+  }
+
+  .heatmap-ctrl-btn {
+    padding: 4px 7px;
+    font-size: 0.68rem;
+    gap: 4px;
+  }
+
+  /* On very small screens, hide text labels in action buttons */
+  .heatmap-ctrl-btn span {
+    display: none;
+  }
+
+  /* But keep the refresh countdown visible since it's important */
+  .heatmap-ctrl-btn:first-child span {
+    display: inline;
+  }
+
+  .heatmap-index-btn {
+    padding: 5px 8px;
+    font-size: 0.7rem;
+  }
+
+  .hib-label {
+    display: none;
+  }
+
+  .heatmap-subheader {
+    padding: 6px 12px;
+    gap: 6px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+  }
+
+  .heatmap-subheader::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ============================================================
+   MARKET VIEW TOOLBAR - RESPONSIVE
+   ============================================================ */
+.market-view-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.market-view-label-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: nowrap;
+}
+
+.market-view-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.market-view-btn-group {
+  display: flex;
+  background: rgba(0,0,0,0.3);
+  padding: 3px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.06);
+  flex-shrink: 0;
+}
+
+.market-view-btn {
+  padding: 5px 11px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.market-view-btn.active.mvb-heatmap {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
+}
+
+.market-view-btn.active.mvb-options {
+  background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
+  color: #ffffff;
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.35);
+}
+
+.market-view-btn.active.mvb-both {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: #ffffff;
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
+}
+
+/* Short labels only on mobile, hide on desktop */
+.mvb-short-label { display: none; }
+.mvb-full-label  { display: inline; }
+
+.market-view-subtitle {
+  font-size: 0.72rem;
+  color: #64748b;
+}
+
+@media (max-width: 768px) {
+  .market-view-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 10px 12px;
+  }
+
+  .market-view-label-row {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 8px;
+  }
+
+  .market-view-label-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .market-view-btn-group {
+    flex-shrink: 0;
+  }
+
+  .mvb-short-label { display: inline; }
+  .mvb-full-label  { display: none; }
+
+  .market-view-btn {
+    padding: 5px 10px;
+    font-size: 0.72rem;
+  }
+
+  .market-view-subtitle {
+    display: none;
+  }
+}
+
+/* ============================================================
+   MOBILE BOTTOM NAVIGATION BAR
+   ============================================================ */
 .mobile-bottom-nav {
   display: none;
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  height: 62px;
-  background: rgba(9, 13, 22, 0.96);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  height: 64px;
+  background: rgba(7, 9, 14, 0.97);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
   z-index: 90;
-  padding: 0 4px;
+  padding: 0 2px;
   align-items: center;
   justify-content: space-around;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.7);
 }
 
 @media (max-width: 768px) {
@@ -570,14 +854,15 @@ select.input-field {
   gap: 3px;
   background: transparent;
   border: none;
-  color: #94a3b8;
-  font-size: 0.675rem;
+  color: #64748b;
+  font-size: 0.62rem;
   font-weight: 600;
   cursor: pointer;
-  padding: 6px 8px;
-  border-radius: 8px;
+  padding: 5px 4px;
+  border-radius: 10px;
   transition: all 0.2s ease;
   flex: 1;
+  min-width: 0;
 }
 
 .mobile-nav-btn.active {
@@ -592,4 +877,48 @@ select.input-field {
 .mobile-nav-btn:hover {
   color: #ffffff;
 }
+
+/* AI Coach center button - special elevated style */
+.mobile-nav-btn-ai {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  flex: 1.2;
+  position: relative;
+  top: -10px; /* lifts above the bar */
+}
+
+.mobile-nav-btn-ai .ai-fab {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 18px rgba(139, 92, 246, 0.55), 0 0 0 3px rgba(139, 92, 246, 0.18);
+  color: #ffffff;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mobile-nav-btn-ai:hover .ai-fab,
+.mobile-nav-btn-ai:active .ai-fab {
+  transform: scale(1.08);
+  box-shadow: 0 6px 24px rgba(139, 92, 246, 0.7);
+}
+
+.mobile-nav-btn-ai .ai-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #c084fc;
+  margin-top: 2px;
+  letter-spacing: 0.02em;
+}
+
 

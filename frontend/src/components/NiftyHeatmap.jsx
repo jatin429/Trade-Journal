@@ -318,349 +318,196 @@ function NiftyHeatmapComponent({ defaultTheme = 'dark', defaultIndex = 'NIFTY50'
       }}
     >
       {/* 1. Heatmap Custom Header Bar */}
-      <div
-        style={{
-          padding: '12px 18px',
-          borderBottom: theme === 'dark' ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #e2e8f0',
-          background: theme === 'dark' ? 'rgba(255, 255, 255, 0.02)' : '#f8fafc',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '12px'
-        }}
-      >
-        {/* Title + Index indicator */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div
-            style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '9px',
+      <div className="nifty-heatmap-header" style={{
+        background: theme === 'dark' ? 'rgba(255, 255, 255, 0.02)' : '#f8fafc',
+        borderBottom: theme === 'dark' ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #e2e8f0'
+      }}>
+        {/* Row 1: Title + LIVE badge */}
+        <div className="heatmap-title-row">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+            <div style={{
+              width: '34px', height: '34px', borderRadius: '9px',
               background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)',
-              flexShrink: 0
-            }}
-          >
-            <Layers size={19} color="#ffffff" />
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)', flexShrink: 0
+            }}>
+              <Layers size={18} color="#ffffff" />
+            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <h3 style={{
+                  fontSize: '1rem', fontWeight: 800, margin: 0,
+                  color: theme === 'dark' ? '#ffffff' : '#0f172a', letterSpacing: '-0.02em'
+                }}>Stock Heatmap</h3>
+                <span style={{
+                  padding: '2px 7px', borderRadius: '6px', fontSize: '0.68rem', fontWeight: 800,
+                  background: 'rgba(16, 185, 129, 0.15)', color: '#10b981',
+                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  display: 'inline-flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap'
+                }}>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 6px #10b981', flexShrink: 0 }} />
+                  LIVE NSE / BSE
+                </span>
+              </div>
+              <div style={{ fontSize: '0.7rem', color: theme === 'dark' ? '#94a3b8' : '#64748b', marginTop: '2px' }}>
+                {activeSector ? (
+                  <span onClick={() => setActiveSector(null)} style={{ color: '#38bdf8', cursor: 'pointer', fontWeight: 600 }}>
+                    ← Back • <strong>{activeSector}</strong>
+                  </span>
+                ) : 'Grouped by Sector • Sized by Market Cap'}
+              </div>
+            </div>
           </div>
 
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <h3
-                style={{
-                  fontSize: '1.02rem',
-                  fontWeight: 800,
-                  margin: 0,
-                  color: theme === 'dark' ? '#ffffff' : '#0f172a',
-                  letterSpacing: '-0.02em'
-                }}
-              >
-                Stock Heatmap
-              </h3>
-              <span
-                style={{
-                  padding: '2px 8px',
-                  borderRadius: '6px',
-                  fontSize: '0.7rem',
-                  fontWeight: 800,
-                  background: 'rgba(16, 185, 129, 0.15)',
-                  color: '#10b981',
-                  border: '1px solid rgba(16, 185, 129, 0.3)',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px'
-                }}
-              >
-                <span
-                  style={{
-                    width: '6px',
-                    height: '6px',
-                    borderRadius: '50%',
-                    background: '#10b981',
-                    boxShadow: '0 0 6px #10b981'
-                  }}
-                />
-                LIVE NSE / BSE
-              </span>
-            </div>
-            <div
-              style={{
-                fontSize: '0.72rem',
-                color: theme === 'dark' ? '#94a3b8' : '#64748b',
-                marginTop: '1px'
-              }}
+          {/* Action control buttons — mini row */}
+          <div className="heatmap-action-btns">
+            {/* Refresh */}
+            <button
+              onClick={() => fetchHeatmapData(selectedIndex)}
+              disabled={loading}
+              className="heatmap-ctrl-btn"
+              style={{ border: theme === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid #cbd5e1', background: theme === 'dark' ? 'rgba(255,255,255,0.04)' : '#ffffff', color: theme === 'dark' ? '#e2e8f0' : '#0f172a' }}
+              title="Refresh"
             >
-              {activeSector ? (
-                <span
-                  onClick={() => setActiveSector(null)}
-                  style={{ color: '#38bdf8', cursor: 'pointer', fontWeight: 600 }}
-                >
-                  ← Back to All Sectors • Viewing <strong>{activeSector}</strong>
-                </span>
-              ) : (
-                <>Constituents grouped by Sector • Sized by Market Cap • Colored by 1D % Change</>
-              )}
-            </div>
+              <RefreshCw size={12} style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />
+              <span>{countdown}s</span>
+            </button>
+
+            {/* Theme Toggle */}
+            <button
+              onClick={() => setTheme(prev => (prev === 'dark' ? 'light' : 'dark'))}
+              className="heatmap-ctrl-btn"
+              style={{ border: theme === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid #cbd5e1', background: theme === 'dark' ? 'rgba(255,255,255,0.04)' : '#ffffff', color: theme === 'dark' ? '#e2e8f0' : '#0f172a' }}
+              title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} mode`}
+            >
+              {theme === 'dark' ? <Sun size={13} color="#f59e0b" /> : <Moon size={13} color="#6366f1" />}
+              <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
+            </button>
+
+            {/* Expand */}
+            {!isFullscreen && (
+              <button
+                onClick={() => setIsExpandedHeight(prev => !prev)}
+                className="heatmap-ctrl-btn"
+                style={{ border: theme === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid #cbd5e1', background: theme === 'dark' ? 'rgba(255,255,255,0.04)' : '#ffffff', color: theme === 'dark' ? '#e2e8f0' : '#0f172a' }}
+              >
+                {isExpandedHeight ? 'Collapse' : 'Expand'}
+              </button>
+            )}
+
+            {/* Fullscreen */}
+            <button
+              onClick={() => setIsFullscreen(prev => !prev)}
+              className="heatmap-ctrl-btn"
+              style={{ border: theme === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid #cbd5e1', background: theme === 'dark' ? 'rgba(255,255,255,0.04)' : '#ffffff', color: theme === 'dark' ? '#e2e8f0' : '#0f172a' }}
+            >
+              {isFullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
+              <span>{isFullscreen ? 'Exit' : 'Full'}</span>
+            </button>
           </div>
         </div>
 
-        {/* Action Controls & Index Switchers */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          {/* Index Selector Buttons */}
-          <div
-            style={{
-              display: 'flex',
+        {/* Row 2: Index Selector + Search — scrollable on mobile */}
+        <div className="heatmap-index-row">
+          <div className="heatmap-index-scroller">
+            {/* Index pills */}
+            <div className="heatmap-index-pills" style={{
               background: theme === 'dark' ? 'rgba(0,0,0,0.35)' : '#e2e8f0',
-              padding: '3px',
-              borderRadius: '8px',
               border: theme === 'dark' ? '1px solid rgba(255,255,255,0.06)' : '1px solid #cbd5e1'
-            }}
-          >
-            {INDEX_CONFIGS.map(opt => (
-              <button
-                key={opt.id}
-                onClick={() => {
-                  setSelectedIndex(opt.id);
-                  setActiveSector(null);
-                }}
-                style={{
-                  padding: '5px 11px',
-                  borderRadius: '6px',
-                  border: 'none',
-                  background: selectedIndex === opt.id
-                    ? (theme === 'dark' ? '#10b981' : '#0f172a')
-                    : 'transparent',
-                  color: selectedIndex === opt.id
-                    ? '#ffffff'
-                    : (theme === 'dark' ? '#94a3b8' : '#475569'),
-                  fontSize: '0.74rem',
-                  fontWeight: selectedIndex === opt.id ? 800 : 600,
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px'
-                }}
-                title={opt.desc}
-              >
-                <span>{opt.flag}</span>
-                <span>{opt.label}</span>
-              </button>
-            ))}
+            }}>
+              {INDEX_CONFIGS.map(opt => (
+                <button
+                  key={opt.id}
+                  onClick={() => { setSelectedIndex(opt.id); setActiveSector(null); }}
+                  className={`heatmap-index-btn ${selectedIndex === opt.id ? 'hib-active' : ''}`}
+                  style={{
+                    background: selectedIndex === opt.id ? (theme === 'dark' ? '#10b981' : '#0f172a') : 'transparent',
+                    color: selectedIndex === opt.id ? '#ffffff' : (theme === 'dark' ? '#94a3b8' : '#475569'),
+                  }}
+                  title={opt.desc}
+                >
+                  <span>{opt.flag}</span>
+                  <span className="hib-label">{opt.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Quick Search */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              background: theme === 'dark' ? 'rgba(0,0,0,0.25)' : '#ffffff',
-              border: theme === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid #cbd5e1',
-              borderRadius: '8px',
-              padding: '4px 10px'
-            }}
-          >
+          {/* Search */}
+          <div className="heatmap-search" style={{
+            background: theme === 'dark' ? 'rgba(0,0,0,0.25)' : '#ffffff',
+            border: theme === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid #cbd5e1'
+          }}>
             <Search size={13} color={theme === 'dark' ? '#94a3b8' : '#64748b'} />
             <input
               type="text"
-              placeholder="Filter stock..."
+              placeholder="Filter..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               style={{
-                background: 'transparent',
-                border: 'none',
-                outline: 'none',
+                background: 'transparent', border: 'none', outline: 'none',
                 color: theme === 'dark' ? '#ffffff' : '#0f172a',
-                fontSize: '0.72rem',
-                width: '85px'
+                fontSize: '0.72rem', width: '70px'
               }}
             />
           </div>
-
-          {/* Refresh Action */}
-          <button
-            onClick={() => fetchHeatmapData(selectedIndex)}
-            disabled={loading}
-            style={{
-              padding: '6px 10px',
-              borderRadius: '8px',
-              border: theme === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid #cbd5e1',
-              background: theme === 'dark' ? 'rgba(255,255,255,0.04)' : '#ffffff',
-              color: theme === 'dark' ? '#e2e8f0' : '#0f172a',
-              fontSize: '0.72rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px'
-            }}
-            title="Refresh real-time constituency market feed"
-          >
-            <RefreshCw size={12} style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />
-            <span>{countdown}s</span>
-          </button>
-
-          {/* Theme Toggle */}
-          <button
-            onClick={() => setTheme(prev => (prev === 'dark' ? 'light' : 'dark'))}
-            style={{
-              padding: '6px 10px',
-              borderRadius: '8px',
-              border: theme === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid #cbd5e1',
-              background: theme === 'dark' ? 'rgba(255,255,255,0.04)' : '#ffffff',
-              color: theme === 'dark' ? '#e2e8f0' : '#0f172a',
-              fontSize: '0.72rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px'
-            }}
-            title={`Switch to ${theme === 'dark' ? 'Light mode' : 'Dark mode'}`}
-          >
-            {theme === 'dark' ? <Sun size={13} color="#f59e0b" /> : <Moon size={13} color="#6366f1" />}
-            <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
-          </button>
-
-          {/* Height Expand */}
-          {!isFullscreen && (
-            <button
-              onClick={() => setIsExpandedHeight(prev => !prev)}
-              style={{
-                padding: '6px 10px',
-                borderRadius: '8px',
-                border: theme === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid #cbd5e1',
-                background: theme === 'dark' ? 'rgba(255,255,255,0.04)' : '#ffffff',
-                color: theme === 'dark' ? '#e2e8f0' : '#0f172a',
-                fontSize: '0.72rem',
-                fontWeight: 600,
-                cursor: 'pointer'
-              }}
-            >
-              {isExpandedHeight ? 'Collapse' : 'Expand'}
-            </button>
-          )}
-
-          {/* Fullscreen Toggle */}
-          <button
-            onClick={() => setIsFullscreen(prev => !prev)}
-            style={{
-              padding: '6px 10px',
-              borderRadius: '8px',
-              border: theme === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid #cbd5e1',
-              background: theme === 'dark' ? 'rgba(255,255,255,0.04)' : '#ffffff',
-              color: theme === 'dark' ? '#e2e8f0' : '#0f172a',
-              fontSize: '0.72rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px'
-            }}
-          >
-            {isFullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
-            <span>{isFullscreen ? 'Exit' : 'Full'}</span>
-          </button>
         </div>
       </div>
 
       {/* 2. TradingView-styled Subheader Toolbar */}
-      <div
-        style={{
-          padding: '8px 18px',
-          background: theme === 'dark' ? '#0c101d' : '#f1f5f9',
-          borderBottom: theme === 'dark' ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid #e2e8f0',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '10px',
-          fontSize: '0.75rem'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+      <div className="heatmap-subheader" style={{
+        background: theme === 'dark' ? '#0c101d' : '#f1f5f9',
+        borderBottom: theme === 'dark' ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid #e2e8f0',
+        color: theme === 'dark' ? '#94a3b8' : '#64748b'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
           {/* Active Index Badge */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '4px 10px',
-              borderRadius: '6px',
-              background: theme === 'dark' ? 'rgba(255,255,255,0.05)' : '#ffffff',
-              border: theme === 'dark' ? '1px solid rgba(255,255,255,0.08)' : '1px solid #cbd5e1',
-              fontWeight: 700,
-              color: theme === 'dark' ? '#ffffff' : '#0f172a'
-            }}
-          >
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 10px',
+            borderRadius: '6px', fontWeight: 700,
+            background: theme === 'dark' ? 'rgba(255,255,255,0.05)' : '#ffffff',
+            border: theme === 'dark' ? '1px solid rgba(255,255,255,0.08)' : '1px solid #cbd5e1',
+            color: theme === 'dark' ? '#ffffff' : '#0f172a', fontSize: '0.73rem'
+          }}>
             <span>{activeIndexObj.flag}</span>
             <span>{activeIndexObj.label}</span>
-            <span style={{ fontSize: '0.65rem', color: '#10b981', background: 'rgba(16,185,129,0.15)', padding: '1px 5px', borderRadius: '4px' }}>
+            <span style={{ fontSize: '0.64rem', color: '#10b981', background: 'rgba(16,185,129,0.15)', padding: '1px 5px', borderRadius: '4px' }}>
               {data?.totalCount || 50} Stocks
             </span>
           </div>
 
-          {/* Sizing metric selector */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ color: theme === 'dark' ? '#94a3b8' : '#64748b' }}>Size:</span>
-            <select
-              value={sizeMode}
-              onChange={e => setSizeMode(e.target.value)}
-              style={{
-                background: theme === 'dark' ? '#1e293b' : '#ffffff',
-                color: theme === 'dark' ? '#f8fafc' : '#0f172a',
-                border: theme === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid #cbd5e1',
-                borderRadius: '6px',
-                padding: '3px 8px',
-                fontSize: '0.72rem',
-                fontWeight: 600,
-                outline: 'none',
-                cursor: 'pointer'
-              }}
-            >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.73rem' }}>
+            <span>Size:</span>
+            <select value={sizeMode} onChange={e => setSizeMode(e.target.value)} style={{
+              background: theme === 'dark' ? '#1e293b' : '#ffffff',
+              color: theme === 'dark' ? '#f8fafc' : '#0f172a',
+              border: theme === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid #cbd5e1',
+              borderRadius: '6px', padding: '3px 8px', fontSize: '0.72rem', fontWeight: 600, outline: 'none', cursor: 'pointer'
+            }}>
               <option value="marketCap">Market cap</option>
               <option value="equal">Equal size</option>
             </select>
           </div>
 
-          {/* Grouping selector */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ color: theme === 'dark' ? '#94a3b8' : '#64748b' }}>Grouping:</span>
-            <select
-              value={groupMode}
-              onChange={e => {
-                setGroupMode(e.target.value);
-                setActiveSector(null);
-              }}
-              style={{
-                background: theme === 'dark' ? '#1e293b' : '#ffffff',
-                color: theme === 'dark' ? '#f8fafc' : '#0f172a',
-                border: theme === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid #cbd5e1',
-                borderRadius: '6px',
-                padding: '3px 8px',
-                fontSize: '0.72rem',
-                fontWeight: 600,
-                outline: 'none',
-                cursor: 'pointer'
-              }}
-            >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.73rem' }}>
+            <span>Grouping:</span>
+            <select value={groupMode} onChange={e => { setGroupMode(e.target.value); setActiveSector(null); }} style={{
+              background: theme === 'dark' ? '#1e293b' : '#ffffff',
+              color: theme === 'dark' ? '#f8fafc' : '#0f172a',
+              border: theme === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid #cbd5e1',
+              borderRadius: '6px', padding: '3px 8px', fontSize: '0.72rem', fontWeight: 600, outline: 'none', cursor: 'pointer'
+            }}>
               <option value="sector">Sector</option>
               <option value="none">No grouping</option>
             </select>
           </div>
         </div>
 
-        {/* Live Status text */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.7rem', color: theme === 'dark' ? '#94a3b8' : '#64748b' }}>
-          {lastUpdated && (
-            <span>Updated: {lastUpdated.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
-          )}
-        </div>
+        {lastUpdated && (
+          <div style={{ fontSize: '0.68rem', whiteSpace: 'nowrap' }}>
+            Updated: {lastUpdated.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+          </div>
+        )}
       </div>
 
       {/* 3. Main Treemap Visual Canvas */}

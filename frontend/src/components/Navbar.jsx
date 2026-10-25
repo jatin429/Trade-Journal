@@ -463,7 +463,7 @@ export default function Navbar({
             setCurrentTab('dashboard');
           }}
         >
-          <BarChart2 size={18} />
+          <BarChart2 size={17} />
           <span>Dashboard</span>
         </button>
 
@@ -475,43 +475,32 @@ export default function Navbar({
             setCurrentTab('trades');
           }}
         >
-          <TrendingUp size={18} />
+          <TrendingUp size={17} />
           <span>Trades</span>
         </button>
 
-        {/* Center AI Copilot Action */}
         <button
-          id="mobile-nav-ai"
-          className="mobile-nav-btn"
-          onClick={() => onOpenAiModal()}
-          style={{ color: '#c084fc' }}
-        >
-          <div style={{
-            width: '32px',
-            height: '32px',
-            borderRadius: '10px',
-            background: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 2px 10px rgba(139, 92, 246, 0.5)',
-            color: '#ffffff'
-          }}>
-            <Sparkles size={16} />
-          </div>
-          <span style={{ color: '#c084fc', fontWeight: 700 }}>AI Coach</span>
-        </button>
-
-        <button
-          id="mobile-nav-brokers"
-          className={`mobile-nav-btn ${currentTab === 'brokers' ? 'active' : ''}`}
+          id="mobile-nav-playbooks"
+          className={`mobile-nav-btn ${currentTab === 'playbooks' ? 'active' : ''}`}
           onClick={() => {
             if (!currentUser) { onOpenAuthModal && onOpenAuthModal('register'); return; }
-            setCurrentTab('brokers');
+            setCurrentTab('playbooks');
           }}
         >
-          <Zap size={18} />
-          <span>Brokers</span>
+          <BookOpen size={17} />
+          <span>Playbooks</span>
+        </button>
+
+        {/* Center AI Copilot Action — elevated FAB */}
+        <button
+          id="mobile-nav-ai"
+          className="mobile-nav-btn-ai"
+          onClick={() => onOpenAiModal && onOpenAiModal()}
+        >
+          <div className="ai-fab">
+            <Sparkles size={20} />
+          </div>
+          <span className="ai-label">AI Coach</span>
         </button>
 
         <button
@@ -522,8 +511,20 @@ export default function Navbar({
             setCurrentTab('journal');
           }}
         >
-          <CalendarIcon size={18} />
+          <CalendarIcon size={17} />
           <span>Review</span>
+        </button>
+
+        <button
+          id="mobile-nav-brokers"
+          className={`mobile-nav-btn ${currentTab === 'brokers' ? 'active' : ''}`}
+          onClick={() => {
+            if (!currentUser) { onOpenAuthModal && onOpenAuthModal('register'); return; }
+            setCurrentTab('brokers');
+          }}
+        >
+          <Zap size={17} />
+          <span>Brokers</span>
         </button>
       </nav>
     </>
