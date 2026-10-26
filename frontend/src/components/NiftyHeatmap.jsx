@@ -12,6 +12,7 @@ import {
   TrendingDown
 } from 'lucide-react';
 import { getMarketHeatmap } from '../services/api';
+import heatmapFallbackData from '../data/heatmapFallback.json';
 
 const INDEX_CONFIGS = [
   { id: 'NIFTY50', label: 'Nifty 50 Index', flag: '🇮🇳', desc: '50 Largest Indian Blue-Chips' },
@@ -20,6 +21,8 @@ const INDEX_CONFIGS = [
   { id: 'CNX100', label: 'Nifty 100', flag: '📈', desc: 'Top 100 Large-Cap Equities' },
   { id: 'CNX500', label: 'Nifty 500', flag: '🚀', desc: 'Broad Market (Top 500 Equities)' }
 ];
+
+const POLL_INTERVAL_SECONDS = 180; // 3 minutes, aligned with backend cache TTL
 
 /**
  * Squarified Treemap Layout Algorithm
@@ -136,15 +139,14 @@ function NiftyHeatmapComponent({ defaultTheme = 'dark', defaultIndex = 'NIFTY50'
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState(null);
-<<<<<<< HEAD
   const [feedNotice, setFeedNotice] = useState(null);
-=======
->>>>>>> 4f08dd871f219d01d0e174ab054099f8e98a6da8
   const [lastUpdated, setLastUpdated] = useState(null);
-  const [countdown, setCountdown] = useState(60);
+  const [countdown, setCountdown] = useState(POLL_INTERVAL_SECONDS);
 
   const containerRef = useRef(null);
+  const abortControllerRef = useRef(null);
   const [dimensions, setDimensions] = useState({ width: 1200, height: 600 });
 
   // Update container size on resize
@@ -176,53 +178,103 @@ function NiftyHeatmapComponent({ defaultTheme = 'dark', defaultIndex = 'NIFTY50'
     };
   }, [isFullscreen, isExpandedHeight, data]);
 
-  // Fetch Live Indian Market Constituents from Backend
-  const fetchHeatmapData = async (indexKey = selectedIndex) => {
-    setLoading(true);
-<<<<<<< HEAD
-=======
-    setError(null);
->>>>>>> 4f08dd871f219d01d0e174ab054099f8e98a6da8
+  // Fetch Live Indian Market Constituents with AbortController & Graceful Degradation
+  const fetchHeatmapData = async (indexKey = selectedIndex, isManual = false) => {
+    // Abort previous in-flight request if user rapidly switched indices
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    // Prevent screen flicker: only show full blocking loading overlay if no data exists yet
+    if (!data) {
+      setLoading(true);
+    }
+    setIsRefreshing(true);
+
     try {
-      const res = await getMarketHeatmap(indexKey);
-      if (res && res.success) {
+      const res = await getMarketHeatmap(indexKey, { signal: controller.signal });
+      if (res && res.success && Array.isArray(res.stocks) && res.stocks.length > 0) {
         setData(res);
-<<<<<<< HEAD
         setFeedNotice(res.notice || null);
         setError(null);
         setLastUpdated(res.updatedAt ? new Date(res.updatedAt) : new Date());
-=======
-        setLastUpdated(new Date());
->>>>>>> 4f08dd871f219d01d0e174ab054099f8e98a6da8
-        setCountdown(60);
+        setCountdown(POLL_INTERVAL_SECONDS);
       } else {
-        setError(res?.error || 'Failed to load live index constituents');
+        throw new Error(res?.error || 'Failed to load live index constituents');
       }
     } catch (err) {
-<<<<<<< HEAD
-      const errMsg = err?.response?.data?.error || err.message || 'Market data connection error';
-      setError(errMsg);
-=======
-      setError(err?.response?.data?.error || err.message || 'Market data connection error');
->>>>>>> 4f08dd871f219d01d0e174ab054099f8e98a6da8
+      if (err.name === 'CanceledError' || err.name === 'AbortError' || err.code === 'ERR_CANCELED') {
+        return; // Request was superseded by a newer one
+      }
+
+      const isRateLimit = err?.response?.status === 429 || (err.message && err.message.includes('429'));
+      console.warn(`[NiftyHeatmap] Fetch notice for ${indexKey}:`, err.message);
+
+      // If we don't have any data in memory yet, use client-side bundled fallback snapshot
+      if (!data || !data.stocks || data.stocks.length === 0) {
+        const fallbackList = heatmapFallbackData[indexKey] || heatmapFallbackData['NIFTY50'] || [];
+        if (fallbackList.length > 0) {
+          setData({
+            success: true,
+            index: indexKey,
+            totalCount: fallbackList.length,
+            stocks: fallbackList,
+            cached: true,
+            isFallback: true
+          });
+          setFeedNotice(isRateLimit
+            ? 'Live feed rate-limited (429) • Serving market snapshot'
+            : 'Live feed unavailable • Serving offline snapshot');
+          setError(null);
+          setLastUpdated(new Date());
+          setCountdown(POLL_INTERVAL_SECONDS);
+        } else {
+          setError(err?.response?.data?.error || err.message || 'Market data connection error');
+        }
+      } else {
+        // If data is already displayed, preserve it so the UI doesn't break
+        setFeedNotice(isRateLimit
+          ? 'Live update paused (429 rate limit) • Preserving view'
+          : 'Live update paused • Preserving current view');
+      }
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   };
 
   useEffect(() => {
     fetchHeatmapData(selectedIndex);
+
+    // Visibility-aware auto-polling (does not waste API quotas when tab is inactive)
     const interval = setInterval(() => {
-      fetchHeatmapData(selectedIndex);
-    }, 60000);
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        fetchHeatmapData(selectedIndex);
+      }
+    }, POLL_INTERVAL_SECONDS * 1000);
 
     const countdownTimer = setInterval(() => {
-      setCountdown(c => (c > 1 ? c - 1 : 60));
+      if (typeof document === 'undefined' || document.visibilityState === 'visible') {
+        setCountdown(c => (c > 1 ? c - 1 : POLL_INTERVAL_SECONDS));
+      }
     }, 1000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchHeatmapData(selectedIndex);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       clearInterval(interval);
       clearInterval(countdownTimer);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
     };
   }, [selectedIndex]);
 
@@ -381,14 +433,19 @@ function NiftyHeatmapComponent({ defaultTheme = 'dark', defaultIndex = 'NIFTY50'
           <div className="heatmap-action-btns">
             {/* Refresh */}
             <button
-              onClick={() => fetchHeatmapData(selectedIndex)}
-              disabled={loading}
+              onClick={() => fetchHeatmapData(selectedIndex, true)}
+              disabled={isRefreshing}
               className="heatmap-ctrl-btn"
-              style={{ border: theme === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid #cbd5e1', background: theme === 'dark' ? 'rgba(255,255,255,0.04)' : '#ffffff', color: theme === 'dark' ? '#e2e8f0' : '#0f172a' }}
-              title="Refresh"
+              style={{
+                border: theme === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid #cbd5e1',
+                background: theme === 'dark' ? 'rgba(255,255,255,0.04)' : '#ffffff',
+                color: theme === 'dark' ? '#e2e8f0' : '#0f172a',
+                cursor: isRefreshing ? 'wait' : 'pointer'
+              }}
+              title="Refresh Heatmap Now"
             >
-              <RefreshCw size={12} style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />
-              <span>{countdown}s</span>
+              <RefreshCw size={12} style={{ animation: isRefreshing ? 'spin 1s linear infinite' : 'none' }} />
+              <span>{isRefreshing ? 'Syncing...' : `${countdown}s`}</span>
             </button>
 
             {/* Theme Toggle */}
@@ -521,7 +578,6 @@ function NiftyHeatmapComponent({ defaultTheme = 'dark', defaultIndex = 'NIFTY50'
           </div>
         </div>
 
-<<<<<<< HEAD
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           {feedNotice && (
             <div style={{
@@ -561,13 +617,6 @@ function NiftyHeatmapComponent({ defaultTheme = 'dark', defaultIndex = 'NIFTY50'
             </div>
           )}
         </div>
-=======
-        {lastUpdated && (
-          <div style={{ fontSize: '0.68rem', whiteSpace: 'nowrap' }}>
-            Updated: {lastUpdated.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-          </div>
-        )}
->>>>>>> 4f08dd871f219d01d0e174ab054099f8e98a6da8
       </div>
 
       {/* 3. Main Treemap Visual Canvas */}
@@ -600,22 +649,14 @@ function NiftyHeatmapComponent({ defaultTheme = 'dark', defaultIndex = 'NIFTY50'
           </div>
         )}
 
-<<<<<<< HEAD
         {error && (!data || !data.stocks || data.stocks.length === 0) && (
           <div style={{
             margin: '20px',
             padding: '16px 20px',
-=======
-        {error && (
-          <div style={{
-            margin: '20px',
-            padding: '14px 18px',
->>>>>>> 4f08dd871f219d01d0e174ab054099f8e98a6da8
             borderRadius: '10px',
             background: 'rgba(244,63,94,0.1)',
             border: '1px solid rgba(244,63,94,0.3)',
             color: '#f43f5e',
-<<<<<<< HEAD
             fontSize: '0.82rem',
             display: 'flex',
             flexDirection: 'column',
@@ -638,11 +679,6 @@ function NiftyHeatmapComponent({ defaultTheme = 'dark', defaultIndex = 'NIFTY50'
             >
               Retry
             </button>
-=======
-            fontSize: '0.82rem'
-          }}>
-            <strong>Feed Notice:</strong> {error}
->>>>>>> 4f08dd871f219d01d0e174ab054099f8e98a6da8
           </div>
         )}
 

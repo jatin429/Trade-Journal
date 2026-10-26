@@ -17,12 +17,14 @@ const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASS, {
   dialect: 'mysql',
   logging: false,
 
-  dialectOptions: {
-    ssl: {
-      minVersion: 'TLSv1.2',
-      rejectUnauthorized: true,
-    },
-  },
+  dialectOptions: (DB_HOST && !['localhost', '127.0.0.1'].includes(DB_HOST)) || process.env.DB_SSL === 'true'
+    ? {
+        ssl: {
+          minVersion: 'TLSv1.2',
+          rejectUnauthorized: true,
+        },
+      }
+    : {},
 
   pool: {
     max: 5,

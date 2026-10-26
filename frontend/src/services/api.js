@@ -80,7 +80,7 @@ export const getServerStatus = () => api.get('/status').then(res => res.data);
 export const getOptionChain = (symbol = 'NIFTY', strikes = 20) =>
   api.get('/market/option-chain', { params: { symbol, strikes } }).then(res => res.data);
 
-export const getMarketHeatmap = (index = 'NIFTY50') =>
-  api.get('/market/heatmap', { params: { index } }).then(res => res.data);
+export const getMarketHeatmap = (index = 'NIFTY50', config = {}) =>
+  api.get('/market/heatmap', { params: { index }, ...config }).then(res => res.data);
 
 export default api;

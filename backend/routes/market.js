@@ -371,10 +371,38 @@ const HEATMAP_INDEX_MAP = {
   'CNX500': 'SYML:NSE;CNX500',
 };
 
-<<<<<<< HEAD
 // In-memory cache for heatmap data
-const heatmapCache = new Map();
-const HEATMAP_CACHE_TTL_MS = 90 * 1000; // 90 seconds fresh TTL
+const heatmapCache = new Map(); // indexKey -> { timestamp: number, stocks: Array }
+const HEATMAP_CACHE_TTL_MS = Number(process.env.HEATMAP_CACHE_TTL_MS) || (3 * 60 * 1000); // 3 minutes fresh TTL
+
+// In-flight request tracker for Single-Flight / Request Coalescing
+const inFlightRequests = new Map(); // indexKey -> Promise<{ stocks: Array, timestamp: number }>
+
+// Client rate-limiting on our own endpoint (sliding 1-minute window)
+const clientRequestCounts = new Map();
+const CLIENT_WINDOW_MS = 60 * 1000;
+const CLIENT_MAX_REQUESTS = Number(process.env.HEATMAP_RATE_LIMIT_PER_MIN) || 45;
+
+function isClientRateLimited(ip) {
+  const now = Date.now();
+  const entry = clientRequestCounts.get(ip);
+  if (!entry || now - entry.startTime > CLIENT_WINDOW_MS) {
+    clientRequestCounts.set(ip, { count: 1, startTime: now });
+    return false;
+  }
+  entry.count++;
+  return entry.count > CLIENT_MAX_REQUESTS;
+}
+
+// Clean up client rate-limit entries periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of clientRequestCounts.entries()) {
+    if (now - entry.startTime > CLIENT_WINDOW_MS * 2) {
+      clientRequestCounts.delete(ip);
+    }
+  }
+}, 5 * 60 * 1000).unref();
 
 // Load bundled fallback dataset
 let heatmapFallback = {};
@@ -384,8 +412,121 @@ try {
   console.warn('[Heatmap Route] Could not load heatmapFallback.json:', e.message);
 }
 
-=======
->>>>>>> 4f08dd871f219d01d0e174ab054099f8e98a6da8
+/**
+ * Perform single-flight fetch with TradingView India Scanner
+ * Respects Retry-After and bounded exponential backoff with jitter
+ */
+async function fetchTradingViewScan(symbolSet, indexKey) {
+  const postData = {
+    symbols: { symbolset: [symbolSet] },
+    columns: ['name', 'close', 'change', 'market_cap_basic', 'sector', 'description', 'logoid']
+  };
+
+  const headers = {
+    'Content-Type': 'application/json',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    'Origin': 'https://in.tradingview.com',
+    'Referer': 'https://in.tradingview.com/',
+    'Accept': 'application/json, text/plain, */*',
+    'Accept-Language': 'en-US,en;q=0.9',
+  };
+
+  const maxAttempts = Number(process.env.HEATMAP_RETRY_MAX) || 2;
+  let lastErr = null;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const startTime = Date.now();
+    try {
+      const response = await axios.post(
+        'https://scanner.tradingview.com/india/scan?label-product=heatmap-stock',
+        postData,
+        { headers, timeout: 10000 }
+      );
+
+      const rawData = response.data?.data || [];
+      const stocks = rawData.map(item => {
+        const [name, close, change, marketCap, sector, description, logoid] = item.d || [];
+        return {
+          ticker: item.s || name,
+          symbol: name,
+          name: description || name,
+          price: Number(close) || 0,
+          change: Number(change) || 0,
+          marketCap: Number(marketCap) || 0,
+          sector: sector || 'Other',
+          logoUrl: logoid ? `https://s3-symbol-logo.tradingview.com/${logoid}--big.svg` : null
+        };
+      });
+
+      console.log(JSON.stringify({
+        event: 'HEATMAP_PROVIDER_SUCCESS',
+        index: indexKey,
+        stocksCount: stocks.length,
+        attempt,
+        durationMs: Date.now() - startTime
+      }));
+
+      return stocks;
+    } catch (err) {
+      lastErr = err;
+      const status = err.response?.status;
+      const retryAfter = err.response?.headers?.['retry-after'];
+      const durationMs = Date.now() - startTime;
+
+      console.warn(JSON.stringify({
+        event: 'HEATMAP_PROVIDER_ERROR',
+        index: indexKey,
+        status,
+        message: err.message,
+        attempt,
+        durationMs
+      }));
+
+      // If not rate-limited (429) or server error (5xx), or last attempt, don't retry
+      if (attempt === maxAttempts || (status && status !== 429 && status < 500)) {
+        break;
+      }
+
+      // Respect Retry-After header if given, otherwise apply jittered backoff
+      let delayMs = 600 * Math.pow(1.5, attempt - 1) + Math.random() * 400;
+      if (retryAfter) {
+        const parsed = parseInt(retryAfter, 10);
+        if (!isNaN(parsed) && parsed > 0 && parsed <= 3) {
+          delayMs = parsed * 1000 + Math.random() * 200;
+        }
+      }
+
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+  }
+
+  throw lastErr;
+}
+
+/**
+ * Single-flight request coalescing wrapper
+ */
+async function getOrFetchHeatmap(indexKey, symbolSet) {
+  if (inFlightRequests.has(indexKey)) {
+    return inFlightRequests.get(indexKey);
+  }
+
+  const fetchPromise = (async () => {
+    try {
+      const stocks = await fetchTradingViewScan(symbolSet, indexKey);
+      if (stocks && stocks.length > 0) {
+        heatmapCache.set(indexKey, { timestamp: Date.now(), stocks });
+      }
+      return { stocks, timestamp: Date.now() };
+    } finally {
+      inFlightRequests.delete(indexKey);
+    }
+  })();
+
+  inFlightRequests.set(indexKey, fetchPromise);
+  return fetchPromise;
+}
+
 /**
  * GET /api/market/heatmap?index=NIFTY50
  * Returns live constituency data (price, % change, market cap, sector, logo) for Indian indices
@@ -393,13 +534,29 @@ try {
 router.get('/heatmap', async (req, res) => {
   const indexKey = (req.query.index || 'NIFTY50').toUpperCase();
   const symbolSet = HEATMAP_INDEX_MAP[indexKey] || 'SYML:NSE;NIFTY';
+  const clientIp = req.ip || req.connection?.remoteAddress || '127.0.0.1';
 
-<<<<<<< HEAD
+  // 1. Guard against local DoS / abusive rapid-polling from client
+  if (isClientRateLimited(clientIp)) {
+    console.warn(JSON.stringify({ event: 'CLIENT_RATE_LIMIT_EXCEEDED', ip: clientIp, index: indexKey }));
+    return res.status(429).json({
+      success: false,
+      error: 'Client rate limit exceeded for heatmap. Please slow down requests.',
+      retryAfterSeconds: 30
+    });
+  }
+
   const cached = heatmapCache.get(indexKey);
   const now = Date.now();
 
-  // If cache is fresh, return immediately to prevent 429 rate limits
+  // 2. Cache Hit: serve cached data if fresh (prevents external 429s entirely)
   if (cached && (now - cached.timestamp < HEATMAP_CACHE_TTL_MS)) {
+    console.log(JSON.stringify({
+      event: 'HEATMAP_CACHE_HIT',
+      index: indexKey,
+      stocksCount: cached.stocks.length,
+      ageMs: now - cached.timestamp
+    }));
     return res.json({
       success: true,
       index: indexKey,
@@ -410,71 +567,48 @@ router.get('/heatmap', async (req, res) => {
     });
   }
 
-=======
->>>>>>> 4f08dd871f219d01d0e174ab054099f8e98a6da8
-  try {
-    const postData = {
-      symbols: { symbolset: [symbolSet] },
-      columns: ['name', 'close', 'change', 'market_cap_basic', 'sector', 'description', 'logoid']
-    };
-
-    const response = await axios.post(
-      'https://scanner.tradingview.com/india/scan?label-product=heatmap-stock',
-      postData,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-<<<<<<< HEAD
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-          'Origin': 'https://in.tradingview.com',
-          'Referer': 'https://in.tradingview.com/',
-          'Accept': 'application/json, text/plain, */*',
-          'Accept-Language': 'en-US,en;q=0.9',
-=======
-          'User-Agent': 'Mozilla/5.0'
->>>>>>> 4f08dd871f219d01d0e174ab054099f8e98a6da8
-        },
-        timeout: 10000
-      }
-    );
-
-    const rawData = response.data?.data || [];
-    const stocks = rawData.map(item => {
-      const [name, close, change, marketCap, sector, description, logoid] = item.d || [];
-      return {
-        ticker: item.s || name,
-        symbol: name,
-        name: description || name,
-        price: Number(close) || 0,
-        change: Number(change) || 0,
-        marketCap: Number(marketCap) || 0,
-        sector: sector || 'Other',
-        logoUrl: logoid ? `https://s3-symbol-logo.tradingview.com/${logoid}--big.svg` : null
-      };
-    });
-
-<<<<<<< HEAD
-    if (stocks.length > 0) {
-      heatmapCache.set(indexKey, { timestamp: now, stocks });
+  // 3. Request Coalescing: if another request is currently fetching this index, wait for it
+  if (inFlightRequests.has(indexKey)) {
+    console.log(JSON.stringify({ event: 'HEATMAP_REQUEST_COALESCED', index: indexKey }));
+    try {
+      const result = await inFlightRequests.get(indexKey);
+      return res.json({
+        success: true,
+        index: indexKey,
+        totalCount: result.stocks.length,
+        stocks: result.stocks,
+        cached: true,
+        coalesced: true,
+        updatedAt: new Date(result.timestamp).toISOString()
+      });
+    } catch (e) {
+      // Handled by downstream fallback below
     }
+  }
 
-=======
->>>>>>> 4f08dd871f219d01d0e174ab054099f8e98a6da8
+  // 4. Fetch fresh data from provider (single-flight)
+  try {
+    const result = await getOrFetchHeatmap(indexKey, symbolSet);
     return res.json({
       success: true,
       index: indexKey,
-      totalCount: stocks.length,
-<<<<<<< HEAD
-      stocks,
+      totalCount: result.stocks.length,
+      stocks: result.stocks,
       cached: false,
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date(result.timestamp).toISOString()
     });
   } catch (err) {
     const isRateLimit = err.response?.status === 429 || (err.message && err.message.includes('429'));
-    console.warn(`[Heatmap Route] Warning fetching ${indexKey} (${err.message}). Checking cache/fallback...`);
+    console.warn(`[Heatmap Route] Warning fetching ${indexKey} (${err.message}). Serving fallback/cache...`);
 
-    // 1. If we have any existing cache in memory (even if older than TTL), serve it gracefully
+    // 5. Stale-While-Revalidate: If we have existing cache in memory, serve it gracefully
     if (cached && cached.stocks && cached.stocks.length > 0) {
+      console.log(JSON.stringify({
+        event: 'HEATMAP_SERVED_STALE_CACHE',
+        index: indexKey,
+        stocksCount: cached.stocks.length,
+        ageMs: now - cached.timestamp
+      }));
       return res.json({
         success: true,
         index: indexKey,
@@ -483,15 +617,20 @@ router.get('/heatmap', async (req, res) => {
         cached: true,
         isStale: true,
         notice: isRateLimit
-          ? 'Live feed rate-limited (429). Serving latest snapshot.'
-          : 'Live feed reconnecting. Serving cached snapshot.',
+          ? 'Live provider rate-limited (429). Serving latest snapshot.'
+          : 'Live provider feed reconnecting. Serving cached snapshot.',
         updatedAt: new Date(cached.timestamp).toISOString()
       });
     }
 
-    // 2. If no cache exists, use pre-bundled fallback snapshot
+    // 6. Cold-start fallback: If no cache exists in memory yet, serve bundled snapshot
     const fallbackList = heatmapFallback[indexKey] || heatmapFallback['NIFTY50'] || [];
     if (fallbackList.length > 0) {
+      console.log(JSON.stringify({
+        event: 'HEATMAP_SERVED_BUNDLED_FALLBACK',
+        index: indexKey,
+        stocksCount: fallbackList.length
+      }));
       return res.json({
         success: true,
         index: indexKey,
@@ -500,19 +639,13 @@ router.get('/heatmap', async (req, res) => {
         cached: true,
         isFallback: true,
         notice: isRateLimit
-          ? 'Live feed rate-limited (429). Serving fallback snapshot.'
+          ? 'Live provider rate-limited (429). Serving offline market snapshot.'
           : 'Live feed unavailable. Serving offline market snapshot.',
         updatedAt: new Date().toISOString()
       });
     }
 
-    // 3. Final failure only if both live and fallback are unavailable
-=======
-      stocks
-    });
-  } catch (err) {
-    console.error(`[Heatmap Route] Error fetching ${indexKey}:`, err.message);
->>>>>>> 4f08dd871f219d01d0e174ab054099f8e98a6da8
+    // 7. Final error return only if no data, no cache, and no fallback exist
     return res.status(502).json({
       success: false,
       error: `Failed to fetch heatmap data: ${err.message}`
