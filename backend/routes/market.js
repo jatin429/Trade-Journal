@@ -371,6 +371,7 @@ const HEATMAP_INDEX_MAP = {
   'CNX500': 'SYML:NSE;CNX500',
 };
 
+<<<<<<< HEAD
 // In-memory cache for heatmap data
 const heatmapCache = new Map();
 const HEATMAP_CACHE_TTL_MS = 90 * 1000; // 90 seconds fresh TTL
@@ -383,6 +384,8 @@ try {
   console.warn('[Heatmap Route] Could not load heatmapFallback.json:', e.message);
 }
 
+=======
+>>>>>>> 4f08dd871f219d01d0e174ab054099f8e98a6da8
 /**
  * GET /api/market/heatmap?index=NIFTY50
  * Returns live constituency data (price, % change, market cap, sector, logo) for Indian indices
@@ -391,6 +394,7 @@ router.get('/heatmap', async (req, res) => {
   const indexKey = (req.query.index || 'NIFTY50').toUpperCase();
   const symbolSet = HEATMAP_INDEX_MAP[indexKey] || 'SYML:NSE;NIFTY';
 
+<<<<<<< HEAD
   const cached = heatmapCache.get(indexKey);
   const now = Date.now();
 
@@ -406,6 +410,8 @@ router.get('/heatmap', async (req, res) => {
     });
   }
 
+=======
+>>>>>>> 4f08dd871f219d01d0e174ab054099f8e98a6da8
   try {
     const postData = {
       symbols: { symbolset: [symbolSet] },
@@ -418,11 +424,15 @@ router.get('/heatmap', async (req, res) => {
       {
         headers: {
           'Content-Type': 'application/json',
+<<<<<<< HEAD
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
           'Origin': 'https://in.tradingview.com',
           'Referer': 'https://in.tradingview.com/',
           'Accept': 'application/json, text/plain, */*',
           'Accept-Language': 'en-US,en;q=0.9',
+=======
+          'User-Agent': 'Mozilla/5.0'
+>>>>>>> 4f08dd871f219d01d0e174ab054099f8e98a6da8
         },
         timeout: 10000
       }
@@ -443,14 +453,18 @@ router.get('/heatmap', async (req, res) => {
       };
     });
 
+<<<<<<< HEAD
     if (stocks.length > 0) {
       heatmapCache.set(indexKey, { timestamp: now, stocks });
     }
 
+=======
+>>>>>>> 4f08dd871f219d01d0e174ab054099f8e98a6da8
     return res.json({
       success: true,
       index: indexKey,
       totalCount: stocks.length,
+<<<<<<< HEAD
       stocks,
       cached: false,
       updatedAt: new Date().toISOString()
@@ -493,6 +507,12 @@ router.get('/heatmap', async (req, res) => {
     }
 
     // 3. Final failure only if both live and fallback are unavailable
+=======
+      stocks
+    });
+  } catch (err) {
+    console.error(`[Heatmap Route] Error fetching ${indexKey}:`, err.message);
+>>>>>>> 4f08dd871f219d01d0e174ab054099f8e98a6da8
     return res.status(502).json({
       success: false,
       error: `Failed to fetch heatmap data: ${err.message}`

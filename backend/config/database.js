@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+
+>>>>>>> 4f08dd871f219d01d0e174ab054099f8e98a6da8
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 

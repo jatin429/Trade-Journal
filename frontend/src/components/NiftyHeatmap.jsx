@@ -137,7 +137,10 @@ function NiftyHeatmapComponent({ defaultTheme = 'dark', defaultIndex = 'NIFTY50'
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+<<<<<<< HEAD
   const [feedNotice, setFeedNotice] = useState(null);
+=======
+>>>>>>> 4f08dd871f219d01d0e174ab054099f8e98a6da8
   const [lastUpdated, setLastUpdated] = useState(null);
   const [countdown, setCountdown] = useState(60);
 
@@ -176,20 +179,32 @@ function NiftyHeatmapComponent({ defaultTheme = 'dark', defaultIndex = 'NIFTY50'
   // Fetch Live Indian Market Constituents from Backend
   const fetchHeatmapData = async (indexKey = selectedIndex) => {
     setLoading(true);
+<<<<<<< HEAD
+=======
+    setError(null);
+>>>>>>> 4f08dd871f219d01d0e174ab054099f8e98a6da8
     try {
       const res = await getMarketHeatmap(indexKey);
       if (res && res.success) {
         setData(res);
+<<<<<<< HEAD
         setFeedNotice(res.notice || null);
         setError(null);
         setLastUpdated(res.updatedAt ? new Date(res.updatedAt) : new Date());
+=======
+        setLastUpdated(new Date());
+>>>>>>> 4f08dd871f219d01d0e174ab054099f8e98a6da8
         setCountdown(60);
       } else {
         setError(res?.error || 'Failed to load live index constituents');
       }
     } catch (err) {
+<<<<<<< HEAD
       const errMsg = err?.response?.data?.error || err.message || 'Market data connection error';
       setError(errMsg);
+=======
+      setError(err?.response?.data?.error || err.message || 'Market data connection error');
+>>>>>>> 4f08dd871f219d01d0e174ab054099f8e98a6da8
     } finally {
       setLoading(false);
     }
@@ -506,6 +521,7 @@ function NiftyHeatmapComponent({ defaultTheme = 'dark', defaultIndex = 'NIFTY50'
           </div>
         </div>
 
+<<<<<<< HEAD
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           {feedNotice && (
             <div style={{
@@ -545,6 +561,13 @@ function NiftyHeatmapComponent({ defaultTheme = 'dark', defaultIndex = 'NIFTY50'
             </div>
           )}
         </div>
+=======
+        {lastUpdated && (
+          <div style={{ fontSize: '0.68rem', whiteSpace: 'nowrap' }}>
+            Updated: {lastUpdated.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+          </div>
+        )}
+>>>>>>> 4f08dd871f219d01d0e174ab054099f8e98a6da8
       </div>
 
       {/* 3. Main Treemap Visual Canvas */}
@@ -577,14 +600,22 @@ function NiftyHeatmapComponent({ defaultTheme = 'dark', defaultIndex = 'NIFTY50'
           </div>
         )}
 
+<<<<<<< HEAD
         {error && (!data || !data.stocks || data.stocks.length === 0) && (
           <div style={{
             margin: '20px',
             padding: '16px 20px',
+=======
+        {error && (
+          <div style={{
+            margin: '20px',
+            padding: '14px 18px',
+>>>>>>> 4f08dd871f219d01d0e174ab054099f8e98a6da8
             borderRadius: '10px',
             background: 'rgba(244,63,94,0.1)',
             border: '1px solid rgba(244,63,94,0.3)',
             color: '#f43f5e',
+<<<<<<< HEAD
             fontSize: '0.82rem',
             display: 'flex',
             flexDirection: 'column',
@@ -607,6 +638,11 @@ function NiftyHeatmapComponent({ defaultTheme = 'dark', defaultIndex = 'NIFTY50'
             >
               Retry
             </button>
+=======
+            fontSize: '0.82rem'
+          }}>
+            <strong>Feed Notice:</strong> {error}
+>>>>>>> 4f08dd871f219d01d0e174ab054099f8e98a6da8
           </div>
         )}
 
